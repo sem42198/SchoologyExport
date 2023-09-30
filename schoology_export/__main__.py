@@ -101,50 +101,48 @@ def _login(driver: webdriver.Chrome, email: str, password: str):
     button.click()
 
 
-def _download_assignment(driver: webdriver.Chrome, assignment_id: str, assignment_name: str, output_dir: str):
-    file = os.path.join(output_dir, f"{assignment_name}-{assignment_id}.pdf")
-    if not os.path.isfile(file):
-        driver.get(f"https://app.schoology.com/assignment/{assignment_id}/assessment")
-        try:
-            start_test_button = driver.find_element(value="begin-test-quiz")
-        except:
-            start_test_button = driver.find_element(value="edit-submit-1")
-        start_test_button.click()
-        review_test_button = driver.find_element(value="edit-submit")
-        review_test_button.click()
-        submit_test_button = driver.find_element(value="edit-submit")
-        submit_test_button.click()
-        confirm_button = driver.find_element(value="popup_confirm")
-        confirm_button.click()
-        contents = base64.b64decode(driver.print_page())
-        print("File does not exist - Downloading")
-        with open(file, "wb") as f:
-            f.write(contents)
+def _download_assignment(driver: webdriver.Chrome, assignment_id: str, file: str):
+    driver.get(f"https://app.schoology.com/assignment/{assignment_id}/assessment")
+    try:
+        start_test_button = driver.find_element(value="begin-test-quiz")
+    except:
+        start_test_button = driver.find_element(value="edit-submit-1")
+    start_test_button.click()
+    review_test_button = driver.find_element(value="edit-submit")
+    review_test_button.click()
+    submit_test_button = driver.find_element(value="edit-submit")
+    submit_test_button.click()
+    confirm_button = driver.find_element(value="popup_confirm")
+    confirm_button.click()
+    contents = base64.b64decode(driver.print_page())
+    print("Downloading file")
+    with open(file, "wb") as f:
+        f.write(contents)
 
 
 def main(key: str, secret: str, email: str, password: str, output_dir: str, student_email: str, student_password: str):
     assignments = _get_assignments(key, secret)
+    print(f"Found {len(assignments)} assignments")
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')
     teacher_driver = webdriver.Chrome(options=options)
     _login(teacher_driver, email, password)
-    print(f"Found {len(assignments)} assignments")
-    i = 1
-    for assignment, assignment_name in assignments:
-        print(f"Finding questions for assignment {assignment_name}: {i} of {len(assignments)}")
-        i += 1
-        _add_all_questions_to_assessment(teacher_driver, assignment)
-        _no_randomize_order(teacher_driver, assignment)
-    teacher_driver.close()
-
     student_driver = webdriver.Chrome(options)
     _login(student_driver, student_email, student_password)
     os.makedirs(output_dir, exist_ok=True)
-    i = 1
+
+    i = 0
     for assignment, assignment_name in assignments:
-        print(f"Saving questions for assignment {assignment_name}: {i} of {len(assignments)}")
         i += 1
-        _download_assignment(student_driver, assignment, assignment_name, output_dir)
+        file = os.path.join(output_dir, f"{assignment_name}-{assignment}.pdf")
+        if os.path.isfile(file):
+            print(f"File {file} exists. Skipping")
+            continue
+        print(f"Finding questions for assignment {assignment_name}: {i} of {len(assignments)}")
+        _add_all_questions_to_assessment(teacher_driver, assignment)
+        _no_randomize_order(teacher_driver, assignment)
+        print(f"Saving questions for assignment {assignment_name}: {i} of {len(assignments)}")
+        _download_assignment(student_driver, assignment, file)
 
 
 if __name__ == '__main__':
