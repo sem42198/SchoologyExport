@@ -1,7 +1,7 @@
 import argparse
 import base64
 import os
-from typing import List, Tuple
+from typing import List, Tuple, Set
 
 import schoolopy
 from selenium import webdriver
@@ -20,13 +20,13 @@ def _parse_args():
     return parser.parse_args()
 
 
-def _get_assignments(key: str, secret: str) -> List[Tuple[str, str]]:
+def _get_assignments(key: str, secret: str) -> Set[Tuple[str, str]]:
     sc = schoolopy.Schoology(schoolopy.Auth(key, secret))
     me = sc.get_me()
-    assignments = []
+    assignments = set()
     for section in sc.get_sections(me.uid):
         for assignment in sc.get_assignments(section.id):
-            assignments.append((assignment.id, assignment.title))
+            assignments.add((assignment.id, assignment.title))
     return assignments
 
 
@@ -74,18 +74,15 @@ def main(key: str, secret: str, email: str, password: str, output_dir: str):
     password_box.send_keys(password)
     button = driver.find_element(value="edit-submit")
     button.click()
-    questions = {}
     for assignment, assignment_name in assignments:
         print(f"Finding questions for assignment {assignment_name}")
         question_sets = _get_questions(driver, assignment)
         total_questions = sum([len(question_set) for question_set in question_sets])
         print(f"Found {total_questions} questions for assignment {assignment_name}")
-        questions[f"{assignment_name} - {assignment}"] = question_sets
-
-    for assignment_name, question_sets in questions.items():
+        folder_name = f"{assignment_name} - {assignment}"
         print(f"Downloading questions for {assignment_name}")
         for i, question_set in enumerate(question_sets, start=1):
-            _save_questions(driver, question_set, os.path.join(output_dir, assignment_name, f"question_set_{i}"))
+            _save_questions(driver, question_set, os.path.join(output_dir, folder_name, f"question_set_{i}"))
 
     print(assignments)
 
