@@ -3,7 +3,7 @@ import base64
 import os
 import re
 import time
-from typing import List, Tuple, Set
+from typing import Tuple, Set
 
 import schoolopy
 from selenium import webdriver
@@ -86,20 +86,6 @@ def _no_randomize_order(driver: webdriver.Chrome, assignment_id: str):
         time.sleep(2)
 
 
-def _save_questions(driver: webdriver.Chrome, questions: List[str], location: str):
-    os.makedirs(location, exist_ok=True)
-    for i, question in enumerate(questions, start=10):
-        driver.get(question)
-        frame = driver.find_element(value="edit-title_ifr")
-        frame.click()
-        content_body = frame.find_element(value="tinymce")
-        with open(os.path.join(location, f"question_{i}.html"), "w") as f:
-            f.write(driver.page_source)
-        # data = base64.b64decode(driver.print_page())
-        # with open(os.path.join(location, f"question_{i}.pdf"), "wb") as f:
-        #     f.write(data)
-
-
 def _login(driver: webdriver.Chrome, email: str, password: str):
     driver.implicitly_wait(1)
     driver.get("https://app.schoology.com/login")
@@ -112,22 +98,24 @@ def _login(driver: webdriver.Chrome, email: str, password: str):
 
 
 def _download_assignment(driver: webdriver.Chrome, assignment_id: str, assignment_name: str, output_dir: str):
-    driver.get(f"https://app.schoology.com/assignment/{assignment_id}/assessment")
-    try:
-        start_test_button = driver.find_element(value="begin-test-quiz")
-    except:
-        start_test_button = driver.find_element(value="edit-submit-1")
-    start_test_button.click()
-    review_test_button = driver.find_element(value="edit-submit")
-    review_test_button.click()
-    submit_test_button = driver.find_element(value="edit-submit")
-    submit_test_button.click()
-    confirm_button = driver.find_element(value="popup_confirm")
-    confirm_button.click()
-    contents = base64.b64decode(driver.print_page())
     file = os.path.join(output_dir, f"{assignment_name}-{assignment_id}.pdf")
-    with open(file, "wb") as f:
-        f.write(contents)
+    if not os.path.isfile(file):
+        driver.get(f"https://app.schoology.com/assignment/{assignment_id}/assessment")
+        try:
+            start_test_button = driver.find_element(value="begin-test-quiz")
+        except:
+            start_test_button = driver.find_element(value="edit-submit-1")
+        start_test_button.click()
+        review_test_button = driver.find_element(value="edit-submit")
+        review_test_button.click()
+        submit_test_button = driver.find_element(value="edit-submit")
+        submit_test_button.click()
+        confirm_button = driver.find_element(value="popup_confirm")
+        confirm_button.click()
+        contents = base64.b64decode(driver.print_page())
+        print("File does not exist - Downloading")
+        with open(file, "wb") as f:
+            f.write(contents)
 
 
 def main(key: str, secret: str, email: str, password: str, output_dir: str, student_email: str, student_password: str):
