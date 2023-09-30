@@ -56,6 +56,8 @@ def _save_questions(driver: webdriver.Chrome, questions: List[str], location: st
     os.makedirs(location, exist_ok=True)
     for i, question in enumerate(questions, start=1):
         driver.get(question)
+        with open(os.path.join(location, f"question_{i}.html"), "w") as f:
+            f.write(driver.page_source)
         data = base64.b64decode(driver.print_page())
         with open(os.path.join(location, f"question_{i}.pdf"), "wb") as f:
             f.write(data)
