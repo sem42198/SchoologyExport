@@ -29,6 +29,7 @@ def _parse_args():
 
 def _get_assignments(key: str, secret: str) -> Set[Tuple[str, str]]:
     sc = schoolopy.Schoology(schoolopy.Auth(key, secret))
+    sc.limit = 500
     me = sc.get_me()
     assignments = set()
     for section in sc.get_sections(me.uid):
@@ -83,7 +84,7 @@ def _no_randomize_order(driver: webdriver.Chrome, assignment_id: str):
         webdriver.ActionChains(driver).send_keys(webdriver.Keys.TAB).send_keys(webdriver.Keys.TAB) \
             .send_keys(webdriver.Keys.TAB).send_keys(webdriver.Keys.TAB).send_keys(webdriver.Keys.TAB) \
             .send_keys(webdriver.Keys.TAB).send_keys(webdriver.Keys.TAB).send_keys(webdriver.Keys.ENTER).perform()
-        time.sleep(2)
+        time.sleep(5)
 
 
 def _login(driver: webdriver.Chrome, email: str, password: str):
