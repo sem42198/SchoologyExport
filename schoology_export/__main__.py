@@ -73,14 +73,18 @@ def _no_randomize_order(driver: webdriver.Chrome, assignment_id: str):
     randomize_order = driver.find_element(value="edit-randomize-order")
     attempts = driver.find_element(value="edit-attempts")
     student_view = driver.find_element(value="edit-student-view")
+    paging = driver.find_element(value="edit-paging")
     order_select = Select(randomize_order)
     attempts_select = Select(attempts)
     student_view_select = Select(student_view)
+    paging_select = Select(paging)
     if (order_select.first_selected_option.get_attribute("value") != "0" or
             attempts_select.first_selected_option.get_attribute("value") != "0" or
-            student_view_select.first_selected_option.get_attribute("value") != "3"):
+            student_view_select.first_selected_option.get_attribute("value") != "3" or
+            paging_select.first_selected_option.get_attribute("value") != "1"):
         attempts_select.select_by_value("0")
         student_view_select.select_by_value("3")
+        paging_select.select_by_value("1")
         order_select.select_by_value("1")
         order_select.select_by_value("0")
         print("Saving assessment settings")
