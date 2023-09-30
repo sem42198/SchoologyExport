@@ -3,7 +3,7 @@ import base64
 import os
 import re
 import time
-from typing import Tuple, Set
+from typing import Tuple, List
 
 import schoolopy
 from selenium import webdriver
@@ -27,14 +27,14 @@ def _parse_args():
     return parser.parse_args()
 
 
-def _get_assignments(key: str, secret: str) -> Set[Tuple[str, str]]:
+def _get_assignments(key: str, secret: str) -> List[Tuple[str, str]]:
     sc = schoolopy.Schoology(schoolopy.Auth(key, secret))
     sc.limit = 500
     me = sc.get_me()
-    assignments = set()
+    assignments = []
     for section in sc.get_sections(me.uid):
         for assignment in sc.get_assignments(section.id):
-            assignments.add((assignment.id, assignment.title))
+            assignments.append((assignment.id, assignment.title))
     return assignments
 
 
@@ -48,7 +48,6 @@ def _add_all_questions_to_assessment(driver: webdriver.Chrome, assignment_id: st
         try:
             num_questions = question_set.find_element(by=By.CLASS_NAME, value="component-num-questions")
         except:
-            print("Not a question set. Skipping")
             continue
         match = re.match(r"(\d+) of (\d+) questions?", num_questions.text)
         if match.group(1) != match.group(2):
