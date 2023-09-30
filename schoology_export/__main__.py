@@ -45,7 +45,11 @@ def _add_all_questions_to_assessment(driver: webdriver.Chrome, assignment_id: st
     print(f"Found {len(question_sets)} question sets")
     for i in range(question_set_count):
         question_set = question_sets[i]
-        num_questions = question_set.find_element(by=By.CLASS_NAME, value="component-num-questions")
+        try:
+            num_questions = question_set.find_element(by=By.CLASS_NAME, value="component-num-questions")
+        except:
+            print("Not a question set. Skipping")
+            continue
         match = re.match(r"(\d+) of (\d+) questions?", num_questions.text)
         if match.group(1) != match.group(2):
             menu_button = question_set.find_element(by=By.CLASS_NAME, value="action-links-unfold-text")
@@ -62,7 +66,7 @@ def _add_all_questions_to_assessment(driver: webdriver.Chrome, assignment_id: st
                 .send_keys(webdriver.Keys.ENTER).perform()
             driver.get(f"https://app.schoology.com/assignment/{assignment_id}/assessment_questions")
             question_sets = driver.find_elements(by=By.CLASS_NAME, value="component-summary-wrapper")
-            time.sleep(2)
+            time.sleep(5)
 
 
 def _no_randomize_order(driver: webdriver.Chrome, assignment_id: str):
