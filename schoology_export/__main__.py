@@ -46,6 +46,7 @@ def _get_questions(driver: webdriver.Chrome, assignment_id: str) -> List[List[st
             menu_button.click()
             edit_button = question_row.find_element(by=By.CLASS_NAME, value="action-edit-child")
             set_questions.append(edit_button.get_attribute("href"))
+            menu_button.click()
         assessment_questions.append(set_questions)
 
     return assessment_questions
@@ -73,11 +74,16 @@ def main(key: str, secret: str, email: str, password: str, output_dir: str):
     password_box.send_keys(password)
     button = driver.find_element(value="edit-submit")
     button.click()
+    questions = {}
     for assignment, assignment_name in assignments:
         print(f"Finding questions for assignment {assignment_name}")
         question_sets = _get_questions(driver, assignment)
         total_questions = sum([len(question_set) for question_set in question_sets])
         print(f"Found {total_questions} questions for assignment {assignment_name}")
+        questions[f"{assignment_name} - {assignment}"] = question_sets
+
+    for assignment_name, question_sets in questions.items():
+        print(f"Downloading questions for {assignment_name}")
         for i, question_set in enumerate(question_sets, start=1):
             _save_questions(driver, question_set, os.path.join(output_dir, assignment_name, f"question_set_{i}"))
 
